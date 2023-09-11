@@ -6,7 +6,8 @@ use std::net::TcpStream;
 fn main() -> Result<(), Box<dyn Error>> {
     print_header();
     let mut server = connect_to_server()?;
-    server.write("Hello World!".as_bytes())?;
+
+    register_user(&mut server)?;
 
     Ok(())
 }
@@ -40,5 +41,27 @@ fn get_server_addr() -> Result<String, Box<dyn Error>> {
     stdin().lock().read_line(&mut buff)?;
 
     Ok(buff.trim().to_owned())
+}
+
+fn register_user(server: &mut TcpStream) -> Result<(), Box<dyn Error>> {
+    println!("Entre com o seu nome: ");
+    print!("> ");
+    io::stdout().flush().expect("Falha ao dar flush em buffer");
+
+    let mut nome = String::new();
+    stdin().read_line(&mut nome)?;
+    nome.pop();
+
+    println!("Entre com a sala que quer participar: ");
+    print!("> ");
+    io::stdout().flush().expect("Falha ao dar flush em buffer");
+
+    let mut room = String::new();
+    stdin().read_line(&mut room)?;
+    room.pop();
+
+    server.write(format!("{nome}&{room}").as_bytes())?;
+
+    Ok(())
 }
 
