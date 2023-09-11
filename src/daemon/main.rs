@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::io::Read;
+use std::io::{BufRead, BufReader};
 use std::net::{TcpListener, TcpStream};
 use std::sync::{Mutex, Arc};
 use std::thread;
@@ -17,10 +17,18 @@ fn main() -> std::io::Result<()> {
         let rooms = rooms.clone();
 
         thread::spawn(move || {
-            let mut buff = String::new();
-            conn.read_to_string(&mut buff).unwrap();
+            let conn_clone = conn.try_clone().unwrap();
 
-            let mut iter = buff.split("&");
+            let mut buff = String::new();
+            let mut reader = BufReader::new(&mut conn);
+            let bytes_read = reader
+                .fill_buf()
+                .unwrap()
+                .read_line(&mut buff)
+                .unwrap();
+            reader.consume(bytes_read);
+
+            let mut iter = buff.trim().split("&");
             let name = match iter.next() {
                 Some(val) => val.to_string(),
                 None => {
@@ -46,7 +54,7 @@ fn main() -> std::io::Result<()> {
                     }
                     rooms.get_mut(&room).unwrap()
                 };
-                room.push(conn.try_clone().unwrap());
+                room.push(conn_clone);
             }
 
             println!("[INFO] User {name} succesfully entered \
