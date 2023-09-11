@@ -33,6 +33,21 @@ fn main() -> Result<(), Box<dyn Error>> {
         });
     }
 
+    let mut buff = String::new();
+    loop {
+        print!("> ");
+        io::stdout().flush().expect("Falha ao dar flush em buffer");
+
+        buff.clear();
+        stdin().read_line(&mut buff)?;
+
+        if buff.trim() == "exit" {
+            break;
+        }
+
+        server.write_all(buff.as_bytes()).unwrap();
+    }
+
     Ok(())
 }
 
