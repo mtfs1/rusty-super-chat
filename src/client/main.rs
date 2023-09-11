@@ -1,6 +1,7 @@
-use std::io::{prelude::*, stdin, self};
+use std::io::{prelude::*, stdin, self, BufReader};
 use std::error::Error;
 use std::net::TcpStream;
+use std::thread;
 
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -8,6 +9,29 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut server = connect_to_server()?;
 
     register_user(&mut server)?;
+
+    {
+        let mut server = server.try_clone().unwrap();
+        thread::spawn(move || {
+            let mut buff = String::new();
+            let mut reader = BufReader::new(&mut server);
+
+            loop {
+                buff.clear();
+                let bytes_read = reader
+                    .fill_buf()
+                    .unwrap()
+                    .read_line(&mut buff)
+                    .unwrap();
+                reader.consume(bytes_read);
+                buff.pop();
+
+                println!("{buff}");
+                print!("> ");
+                io::stdout().flush().expect("Falha ao dar flush em buffer");
+            }
+        });
+    }
 
     Ok(())
 }
